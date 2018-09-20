@@ -49,10 +49,29 @@ func (csvt *Csvt) WriteAll(w io.Writer, records [][]string) error {
 		csvw.Comma = csvt.ToDelimiter
 		return csvw.WriteAll(records)
 	default:
-		jcw := jc.Jc{
-			ToType: csvt.ToType,
+		if csvt.TransformMode == "titled" {
+			titledItems := make([]map[string]interface{}, 0)
+			if len(records) >= 1 {
+				titleRecord := records[0]
+				for i := 1; i < len(records); i++ {
+					titledItem := make(map[string]interface{})
+					record := records[i]
+					for j, cell := range record {
+						titledItem[titleRecord[j]] = cell
+					}
+					titledItems = append(titledItems, titledItem)
+				}
+			}
+			jcw := jc.Jc{
+				ToType: csvt.ToType,
+			}
+			return jcw.Encode(w, titledItems)
+		} else {
+			jcw := jc.Jc{
+				ToType: csvt.ToType,
+			}
+			return jcw.Encode(w, records)
 		}
-		return jcw.Encode(w, records)
 	}
 }
 
