@@ -1,13 +1,17 @@
 # csvt
 
-transform CSV
+transform CSV in various ways
 
 ## usage
 
 ### convert
 
 ```sh
+csvt foo.csv foo.json
+# or
 csvt -t json <foo.csv >foo.json
+# or
+csvt - foo.json <foo.csv
 ```
 
 #### foo.csv (input)
@@ -28,13 +32,13 @@ j,k,l
 ### convert (reverse)
 
 ```sh
-csvt -f json <foo.json >foo.csv
+csvt foo.json foo.csv
 ```
 
 ### convert (delimiter)
 
 ```sh
-csvt -d ',' -D '|' <foo.csv >foo_pipe.csv
+csvt -d ',' -D '|' foo.csv foo_pipe.csv
 ```
 
 #### foo_pipe.csv (output)
@@ -49,7 +53,7 @@ j|k|l
 ### transpose
 
 ```sh
-csvt -m transpose <foo.csv >foo_t.csv
+csvt -m transpose foo.csv foo_t.csv
 ```
 
 #### foo_t.csv (output)
@@ -63,7 +67,7 @@ C,f,i,l
 ### map
 
 ```sh
-csvt -m map <foo.csv >foo_map.json
+csvt -m map foo.csv foo_map.json
 ```
 
 #### foo_map.json (output)
@@ -75,7 +79,7 @@ csvt -m map <foo.csv >foo_map.json
 ### unmap
 
 ```sh
-csvt -m unmap <foo_map.json >foo.csv
+csvt -m unmap foo_map.json foo.csv
 ```
 
 ## dependency

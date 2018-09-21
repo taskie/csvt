@@ -1,10 +1,16 @@
 package cli
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/jessevdk/go-flags"
 	"github.com/taskie/csvt"
+	"github.com/taskie/osplus"
+	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 type Options struct {
@@ -28,9 +34,26 @@ func firstRune(s string) (rune, error) {
 	panic("unreachable")
 }
 
+func pathToType(fpath string) string {
+	ext := filepath.Ext(fpath)
+	switch strings.ToLower(ext) {
+	case ".csv":
+		return "csv"
+	case ".json":
+		return "json"
+	case ".yaml", ".yml":
+		return "yaml"
+	case ".msgpack":
+		return "msgpack"
+	default:
+		return ""
+	}
+
+}
+
 func Main() {
 	var opts Options
-	_, err := flags.ParseArgs(&opts, os.Args)
+	args, err := flags.ParseArgs(&opts, os.Args)
 	if opts.Version {
 		if opts.Verbose {
 			fmt.Println("Version: ", csvt.Version)
@@ -52,22 +75,74 @@ func Main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	inputPath := ""
+	inputExtType := ""
+	if len(args) > 1 {
+		inputPath = args[1]
+		inputExtType = pathToType(inputPath)
+	}
+	outputPath := ""
+	outputExtType := ""
+	if len(args) > 2 {
+		outputPath = args[2]
+		outputExtType = pathToType(outputPath)
+	}
 	app := csvt.NewApplication(opts.Mode)
 	app.FromDelimiter = fromDelimiter
 	app.ToDelimiter = toDelimiter
 	if opts.FromType != "" {
 		app.FromType = opts.FromType
+	} else if inputExtType != "" {
+		app.FromType = inputExtType
 	} else if opts.Mode == "unmap" {
 		app.FromType = "json"
 	}
 	if opts.ToType != "" {
 		app.ToType = opts.ToType
+	} else if outputExtType != "" {
+		app.ToType = outputExtType
 	} else if opts.Mode == "map" {
 		app.ToType = "json"
 	}
-	err = app.Run(os.Stdin, os.Stdout)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	var r io.Reader
+	if inputPath == "" || inputPath == "-" {
+		r = bufio.NewReader(os.Stdin)
+	} else {
+		file, err := os.Open(inputPath)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		defer file.Close()
+		r = bufio.NewReader(file)
+	}
+	if outputPath == "" || outputPath == "-" {
+		err = app.Run(r, os.Stdout)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	} else {
+		tmpFile, err := ioutil.TempFile("", "csvt-")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		defer os.Remove(tmpFile.Name())
+		err = func() error {
+			defer tmpFile.Close()
+			w := bufio.NewWriter(tmpFile)
+			defer w.Flush()
+			return app.Run(r, w)
+		}()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		err = osplus.Copy(tmpFile.Name(), outputPath)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 }

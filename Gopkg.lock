@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:b16fbfbcc20645cb419f78325bb2e85ec729b338e996a228124d68931a6f2a37"
+  digest = "1:9f3b30d9f8e0d7040f729b82dcbc8f0dead820a133b3147ce355fc451f32d761"
   name = "github.com/BurntSushi/toml"
   packages = ["."]
   pruneopts = "UT"
-  revision = "b26d9c308763d68093482582cea63d69be07a0f0"
-  version = "v0.3.0"
+  revision = "3012a1dbe2e4bd1391d42b32f0577cb7bbc7f005"
+  version = "v0.3.1"
 
 [[projects]]
   digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
@@ -32,6 +32,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "1a011d0b9e40d83a0c3702dc48c2fee15e543c0d"
+
+[[projects]]
+  branch = "master"
+  digest = "1:06bcc3585cb24f9ef845ca7f0ee9f4378949a1a415cfc1a50994243f4ce740dd"
+  name = "github.com/taskie/osplus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "5e11c86f66e9454bcbfc4e2f65ae685d5334bada"
 
 [[projects]]
   digest = "1:3c1529ffdd2bdcdcb06d5c05f7430c83d220d8dd5482e24dbb81596e44434feb"
@@ -84,6 +92,7 @@
   input-imports = [
     "github.com/jessevdk/go-flags",
     "github.com/taskie/jc",
+    "github.com/taskie/osplus",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
