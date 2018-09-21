@@ -9,8 +9,8 @@ import (
 
 type Options struct {
 	Mode          string `short:"m" long:"mode" default:"convert" description:"transform mode [convert|transpose|map|unmap]"`
-	FromType      string `short:"f" long:"from" default:"csv" description:"convert from [csv|json|yaml|msgpack]"`
-	ToType        string `short:"t" long:"to" default:"csv" description:"convert to [csv|json|yaml|msgpack]"`
+	FromType      string `short:"f" long:"from" description:"convert from [csv|json|yaml|msgpack]"`
+	ToType        string `short:"t" long:"to" description:"convert to [csv|json|yaml|msgpack]"`
 	FromDelimiter string `short:"d" long:"from-delimiter" default:"," description:"delimiter (--from csv)"`
 	ToDelimiter   string `short:"D" long:"to-delimiter" default:"," description:"delimiter (--to csv)"`
 	NoColor       bool   `long:"no-color" env:"NO_COLOR" description:"NOT colorize output"`
@@ -52,12 +52,18 @@ func Main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	app := csvt.Application{
-		FromType:      opts.FromType,
-		ToType:        opts.ToType,
-		FromDelimiter: fromDelimiter,
-		ToDelimiter:   toDelimiter,
-		Mode:          opts.Mode,
+	app := csvt.NewApplication(opts.Mode)
+	app.FromDelimiter = fromDelimiter
+	app.ToDelimiter = toDelimiter
+	if opts.FromType != "" {
+		app.FromType = opts.FromType
+	} else if opts.Mode == "unmap" {
+		app.FromType = "json"
+	}
+	if opts.ToType != "" {
+		app.ToType = opts.ToType
+	} else if opts.Mode == "map" {
+		app.ToType = "json"
 	}
 	err = app.Run(os.Stdin, os.Stdout)
 	if err != nil {
