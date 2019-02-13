@@ -3,14 +3,15 @@ package cli
 import (
 	"bufio"
 	"fmt"
-	"github.com/jessevdk/go-flags"
-	"github.com/taskie/csvt"
-	"github.com/taskie/osplus"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
+
+	"github.com/jessevdk/go-flags"
+	"github.com/taskie/csvt"
+	"github.com/taskie/jc"
+	"github.com/taskie/osplus"
 )
 
 type Options struct {
@@ -35,20 +36,7 @@ func firstRune(s string) (rune, error) {
 }
 
 func pathToType(fpath string) string {
-	ext := filepath.Ext(fpath)
-	switch strings.ToLower(ext) {
-	case ".csv":
-		return "csv"
-	case ".json":
-		return "json"
-	case ".yaml", ".yml":
-		return "yaml"
-	case ".msgpack":
-		return "msgpack"
-	default:
-		return ""
-	}
-
+	return jc.ExtToType(filepath.Ext(fpath))
 }
 
 func Main() {

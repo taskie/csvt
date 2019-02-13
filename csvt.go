@@ -3,8 +3,9 @@ package csvt
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/taskie/jc"
 	"io"
+
+	"github.com/taskie/jc"
 )
 
 var (
@@ -39,10 +40,8 @@ func (app *Application) readRecords(r io.Reader) ([][]string, error) {
 		return records, err
 	default:
 		var data [][]string
-		jcr := jc.Jc{
-			FromType: app.FromType,
-		}
-		err := jcr.Decode(r, &data)
+		jcr := jc.NewDecoder(r, app.FromType)
+		err := jcr.Decode(&data)
 		if err != nil {
 			return nil, err
 		}
@@ -57,19 +56,15 @@ func (app *Application) writeRecords(w io.Writer, records [][]string) error {
 		csvw.Comma = app.ToDelimiter
 		return csvw.WriteAll(records)
 	default:
-		jcw := jc.Jc{
-			ToType: app.ToType,
-		}
-		return jcw.Encode(w, records)
+		jcw := jc.NewEncoder(w, app.ToType)
+		return jcw.Encode(w)
 	}
 }
 
 func (app *Application) readItems(r io.Reader) ([]map[string]string, error) {
 	var data []map[string]string
-	jcr := jc.Jc{
-		FromType: app.FromType,
-	}
-	err := jcr.Decode(r, &data)
+	jcr := jc.NewDecoder(r, app.FromType)
+	err := jcr.Decode(&data)
 	if err != nil {
 		return nil, err
 	}
@@ -77,10 +72,8 @@ func (app *Application) readItems(r io.Reader) ([]map[string]string, error) {
 }
 
 func (app *Application) writeItems(w io.Writer, items []map[string]string) error {
-	jcw := jc.Jc{
-		ToType: app.ToType,
-	}
-	return jcw.Encode(w, items)
+	jcw := jc.NewEncoder(w, app.ToType)
+	return jcw.Encode(items)
 }
 
 func (app *Application) Convert(r io.Reader, w io.Writer) error {
