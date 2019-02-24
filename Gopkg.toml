@@ -30,12 +30,12 @@
   version = "1.4.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/taskie/jc"
+  version = "0.1.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/taskie/osplus"
+  version = "0.1.2"
 
 [prune]
   go-tests = true
