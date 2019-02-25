@@ -82,10 +82,6 @@ csvt -m map foo.csv foo_map.json
 csvt -m unmap foo_map.json foo.csv
 ```
 
-## dependency
-
-![dependency](images/dependency.png)
-
 ## license
 
 Apache License 2.0

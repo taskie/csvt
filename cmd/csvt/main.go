@@ -1,11 +1,9 @@
 package main
 
 import (
-	"github.com/taskie/csvt/cli"
+	"github.com/taskie/csvt/cli/csvt"
 )
 
-var revision = ""
-
 func main() {
-	cli.Main()
+	csvt.Main()
 }

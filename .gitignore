@@ -53,3 +53,5 @@ _testmain.go
 /cmd/csvt/csvt
 /test/coverage
 /vendor
+/tmp
+/images/dependency.png
