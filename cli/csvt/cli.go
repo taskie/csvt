@@ -39,16 +39,18 @@ func NewCommand(cl *coli.Coli) *cobra.Command {
 	flg.StringP("to-type", "t", "", "to type")
 	flg.StringP("from-delimiter", "d", ",", "from delimiter")
 	flg.StringP("to-delimiter", "D", ",", "to delimiter")
-	flg.StringP("mode", "m", "", "mode [convert|transpose|map|unmap]")
+	flg.StringP("rows", "r", "", "rows (slice)")
+	flg.StringP("cols", "c", "", "cols (slice)")
+	flg.StringP("mode", "m", "", "mode [convert|transpose|map|unmap|slice]")
 	flg.BoolP("error", "e", false, "exit if error")
 
-	cl.BindFlags(flg, []string{"from-type", "to-type", "from-delimiter", "to-delimiter", "mode", "error"})
+	cl.BindFlags(flg, []string{"from-type", "to-type", "from-delimiter", "to-delimiter", "rows", "cols", "mode", "error"})
 	return cmd
 }
 
 type Config struct {
-	Mode, FromType, ToType, FromDelimiter, ToDelimiter, LogLevel string
-	Error                                                        bool
+	Mode, FromType, ToType, FromDelimiter, ToDelimiter, Rows, Cols, LogLevel string
+	Error                                                                    bool
 }
 
 func firstRune(s string) (rune, error) {
@@ -134,6 +136,8 @@ func run(cl *coli.Coli, cmd *cobra.Command, args []string) {
 		if err != nil {
 			return false, err
 		}
+		app.RowRanges = config.Rows
+		app.ColRanges = config.Cols
 		err = app.Run(r, f)
 		if err != nil {
 			log.Fatal("can't convert", zap.Error(err))

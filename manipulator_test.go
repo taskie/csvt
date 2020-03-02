@@ -24,6 +24,11 @@ var items01 = []map[string]string{
 	{"A": "7", "B": "8", "C": "9"},
 }
 
+var slice01 = [][]string{
+	{"5", "6"},
+	{"8", "9"},
+}
+
 var records02 = [][]string{
 	{"a"},
 	{"b", "c", "d"},
@@ -233,5 +238,20 @@ func TestUnmapperKeyCheckedEach03(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
+	}
+}
+
+func TestSlicer01(t *testing.T) {
+	slicer := Slicer{
+		RowRanges: Ranges{NewRange(2, 4)},
+		ColRanges: Ranges{NewRange(1, 3)},
+	}
+	actualSlice01, err := slicer.Slice(records01)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = assertEqualRecords(slice01, actualSlice01)
+	if err != nil {
+		t.Fatal(err)
 	}
 }

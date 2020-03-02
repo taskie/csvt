@@ -18,6 +18,8 @@ type Application struct {
 	FromDelimiter rune
 	ToDelimiter   rune
 	Mode          string
+	RowRanges     string
+	ColRanges     string
 }
 
 func NewApplication(mode string) Application {
@@ -124,6 +126,30 @@ func (app *Application) Unmap(r io.Reader, w io.Writer) error {
 	return app.writeRecords(w, records)
 }
 
+func (app *Application) Slice(r io.Reader, w io.Writer) error {
+	records, err := app.readRecords(r)
+	if err != nil {
+		return err
+	}
+	rowRanges, err := ParseRanges(app.RowRanges)
+	if err != nil {
+		return err
+	}
+	colRanges, err := ParseRanges(app.ColRanges)
+	if err != nil {
+		return err
+	}
+	slicer := Slicer{
+		RowRanges: rowRanges,
+		ColRanges: colRanges,
+	}
+	records, err = slicer.Slice(records)
+	if err != nil {
+		return err
+	}
+	return app.writeRecords(w, records)
+}
+
 func (app *Application) Run(r io.Reader, w io.Writer) error {
 	switch app.Mode {
 	case "convert":
@@ -134,6 +160,8 @@ func (app *Application) Run(r io.Reader, w io.Writer) error {
 		return app.Map(r, w)
 	case "unmap":
 		return app.Unmap(r, w)
+	case "slice":
+		return app.Slice(r, w)
 	default:
 		return fmt.Errorf("invalid mode: %s", app.Mode)
 	}

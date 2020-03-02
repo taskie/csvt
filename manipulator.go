@@ -2,7 +2,10 @@ package csvt
 
 import (
 	"fmt"
+	"math"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 type Transposer struct {
@@ -169,4 +172,160 @@ func (unmapper *Unmapper) UnmapAll(items []map[string]string) ([][]string, error
 		records = append(records, record)
 	}
 	return records, nil
+}
+
+type Range struct {
+	Begin int
+	End   int
+}
+
+func (r Range) Size() int {
+	return r.End - r.Begin
+}
+
+func (r Range) Includes(i int) bool {
+	return r.Begin <= i && i < r.End
+}
+
+func NewRange(begin, end int) Range {
+	return Range{Begin: begin, End: end}
+}
+
+func NewRangeTo(end int) Range {
+	return NewRange(0, end)
+}
+
+func NewRangeFrom(begin int) Range {
+	return NewRange(begin, math.MaxInt32)
+}
+
+func normalizeRanges(rs Ranges, max int) error {
+	for i, r := range rs {
+		if r.Begin < 0 {
+			if r.End == 0 {
+				r.End = max // workaround
+			}
+			r.Begin = max + r.Begin
+		}
+		if r.End < 0 {
+			r.End = max + r.End
+		}
+		rs[i] = r
+	}
+	sort.SliceStable(rs, func(i, j int) bool {
+		return rs[i].End > rs[j].End
+	})
+	sort.SliceStable(rs, func(i, j int) bool {
+		return rs[i].Begin < rs[j].Begin
+	})
+	normalized := make([]Range, 0)
+	prev := NewRange(0, 0)
+	for _, r := range rs {
+		if r.Begin > r.End {
+			return fmt.Errorf("invalid range: %d:%d", r.Begin, r.End)
+		}
+		if prev.End < r.Begin {
+			if prev.Size() > 0 {
+				normalized = append(normalized, prev)
+			}
+			prev = r
+		} else {
+			if prev.End < r.End {
+				prev.End = r.End
+			}
+		}
+	}
+	if prev.Size() > 0 {
+		normalized = append(normalized, prev)
+	}
+	copy(rs, normalized)
+	return nil
+}
+
+func ParseRanges(s string) ([]Range, error) {
+	if s == "" {
+		return nil, nil
+	}
+	rs := make([]Range, 0)
+	for _, sr := range strings.Split(s, ",") {
+		sr = strings.Trim(sr, " ")
+		scs := strings.SplitN(sr, ":", 2)
+		if len(scs) == 1 {
+			i, err := strconv.Atoi(scs[0])
+			if err != nil {
+				return nil, err
+			}
+			rs = append(rs, NewRange(i, i+1))
+		} else {
+			var i, j int
+			var err error
+			if scs[0] != "" {
+				i, err = strconv.Atoi(scs[0])
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				i = 0
+			}
+			if scs[1] != "" {
+				j, err = strconv.Atoi(scs[1])
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				j = math.MaxInt32
+			}
+			rs = append(rs, NewRange(i, j))
+		}
+	}
+	return rs, nil
+}
+
+type Ranges []Range
+
+func (rs Ranges) Includes(i int) bool {
+	for _, r := range rs {
+		if r.Includes(i) {
+			return true
+		}
+	}
+	return false
+}
+
+type Slicer struct {
+	RowRanges Ranges
+	ColRanges Ranges
+}
+
+func (s *Slicer) Slice(records [][]string) ([][]string, error) {
+	err := normalizeRanges(s.RowRanges, len(records))
+	if err != nil {
+		return nil, err
+	}
+	maxCols := -1
+	for _, record := range records {
+		cols := len(record)
+		if maxCols < cols {
+			maxCols = cols
+		}
+	}
+	err = normalizeRanges(s.ColRanges, maxCols)
+	if err != nil {
+		return nil, err
+	}
+	newRecords := make([][]string, 0)
+	for i, record := range records {
+		if s.RowRanges != nil && !s.RowRanges.Includes(i) {
+			continue
+		}
+		newRecord := make([]string, 0)
+		for j, cell := range record {
+			if s.ColRanges != nil && !s.ColRanges.Includes(j) {
+				continue
+			}
+			newRecord = append(newRecord, cell)
+		}
+		newRecords = append(newRecords, newRecord)
+	}
+	return newRecords, nil
 }
